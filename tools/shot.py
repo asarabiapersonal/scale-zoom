@@ -32,8 +32,8 @@ async def main():
         await pg.goto(test.as_uri()); await pg.wait_for_timeout(2500)
         await pg.screenshot(path=str(ROOT / "shots/atom.png"))
         # visit every rung on the scale ladder
-        for lv in [0, 1, 2, 4, 5, 6, 7, 8, 9, 13, 12, 10, 11]:
-            await pg.click(f'.rung[data-level="{lv}"]'); await pg.wait_for_timeout(3500)
+        for lv in [0, 1, 2, 4, 5, 6, 7, 8, 9, 13, 12, 10, 11, 14, 15, 16, 17, 18]:
+            await pg.eval_on_selector(f'.rung[data-level="{lv}"]', "b => b.click()"); await pg.wait_for_timeout(3500)   # JS click: the ladder may need scrolling
             await pg.screenshot(path=str(ROOT / f"shots/level{lv:02d}.png"))
         print("page errors:", errs or "none")
         await b.close()

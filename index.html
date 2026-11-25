@@ -209,6 +209,12 @@ details ul{margin:6px 0 0;padding-left:18px}
   <nav id="ladder" aria-label="Scale levels">
     <h2>Scale ladder</h2>
     <ol>
+      <li class="later lh">Out to space</li>
+      <li><button class="rung" data-level="18"><span>Inner planets</span><span class="s">10¹¹ m</span></button></li>
+      <li><button class="rung" data-level="17"><span>The Sun</span><span class="s">10⁹ m</span></button></li>
+      <li><button class="rung" data-level="16"><span>Earth and Moon</span><span class="s">10⁹ m</span></button></li>
+      <li><button class="rung" data-level="15"><span>Earth</span><span class="s">10⁷ m</span></button></li>
+      <li><button class="rung" data-level="14"><span>In your fingers</span><span class="s">1 m</span></button></li>
       <li class="later lh">Carbon in a solid</li>
       <li><button class="rung" data-level="8"><span>Gem</span><span class="s">10⁻² m</span></button></li>
       <li><button class="rung" data-level="7"><span>Grains</span><span class="s">10⁻⁶ m</span></button></li>
@@ -727,12 +733,13 @@ var DEMO=[['Trigger beta decay',doDecay],['Pull a quark out',doPull],['Trigger b
 
 /* ---------- materials branch: diamond and graphite crystals, energy bands, grains ---------- */
 var branch='main',matSel='graphite',matScene=new THREE.Scene();matScene.background=new THREE.Color(0x090b17);
-function zLo(){return branch==='mat'?-9.3:branch==='pho'?-12.6:-17.35;}function zHi(){return branch==='mat'?-1.4:branch==='pho'?-3.85:-7.25;}
+function zLo(){return branch==='astro'?(AS.focus==='sun'?8.6:-2.0):branch==='mat'?-9.3:branch==='pho'?-12.6:-17.35;}function zHi(){return branch==='astro'?12.2:branch==='mat'?-1.2:branch==='pho'?-3.85:-7.25;}
 matScene.add(new THREE.AmbientLight(0xffffff,0.5));var matKey=new THREE.DirectionalLight(0xffffff,0.9);matScene.add(matKey);
 var matLabelBox=document.createElement('div');matLabelBox.style.display='none';labelBox.appendChild(matLabelBox);
 function mkLabelM(html,cls){var d=mkLabel(html,cls);matLabelBox.appendChild(d);return d;}
-function setBranch(b){branch=b;matLabelBox.style.display=b==='mat'?'':'none';if(window.__phoBox)window.__phoBox.style.display=b==='pho'?'':'none';
-  if(b!=='main')Array.prototype.forEach.call(labelBox.children,function(c){if(c!==matLabelBox&&c!==window.__phoBox)c.style.opacity=0;});level=-1;
+function setBranch(b){branch=b;matLabelBox.style.display=b==='mat'?'':'none';if(window.__phoBox)window.__phoBox.style.display=b==='pho'?'':'none';if(window.__astroBox)window.__astroBox.style.display=b==='astro'?'':'none';
+  camera.up.set(0,1,0);if(b==='astro')astroEnter();
+  if(b!=='main')Array.prototype.forEach.call(labelBox.children,function(c){if(c!==matLabelBox&&c!==window.__phoBox&&c!==window.__astroBox)c.style.opacity=0;});level=-1;
   if(b==='pho'){theta=Math.PI/2-0.35;phi=1.3;}}
 function buildCrystal(kind){var pts=[],bonds=[],bl;
   if(kind==='diamond'){var a=0.3567,fcc=[[0,0,0],[0,.5,.5],[.5,0,.5],[.5,.5,0]],lim=1.36*a;bl=a*Math.sqrt(3)/4;
@@ -818,7 +825,7 @@ function matLevel(n){var G=matSel==='graphite';
     f:[['Refractive index (589 nm)','2.417'],['Critical angle','24.4°'],['Reflected at the surface, head-on','17%'],['Light speed inside','≈ 124,000 km/s'],['1 carat','0.2 g ≈ 10²² atoms'],['1 ct round brilliant','≈ 6.5 mm across']],
     fl:'Each colored line is one wavelength traced exactly through the facets, with Snell’s law and total internal reflection. Faint white lines are light reflected off the surface on the way in. Time is slowed about 10¹⁰ times.',
     pl:'Each colored line is one wavelength traced exactly through the facets, with Snell’s law and total internal reflection. Faint white lines are light reflected off the surface on the way in. Time is slowed about 10¹⁰ times.',
-    hint:'Press “Shine white light in”, or switch between the cut and rough crystal. Zoom in to go back to the grains.'};}
+    hint:'Press “Shine white light in”, or switch between the cut and rough crystal. Zoom in for the grains, or out to see it held in a hand.'};}
   if(n===6)return {k:'Materials · crystal structure',h:G?'Graphite: carbon in sheets':'Diamond: carbon in a 3D network',
     p:G?['When a plant that took in CO₂ like ours burns, much of its carbon is left as charcoal, made of tiny, jumbled graphite-like sheets. Charcoal is one of the most common things radiocarbon labs date.',
           'In graphite each carbon bonds to three neighbors in a flat honeycomb. Its fourth electron joins a π cloud shared across the whole sheet and free to move, so graphite conducts along its layers. The sheets cling to each other only by weak van der Waals forces, so they slide apart easily: that is pencil lead.']
@@ -1674,7 +1681,7 @@ var SIMPL='<details><summary>What this model simplifies</summary><ul>'+
  '<li>The CO₂ bending is exaggerated about 20 times, and its oscillation is slowed about 10¹³ times.</li>'+
  '<li>The potential coloring uses the model’s atomic charges, which overstate how much charge the carbon gives up.</li></ul></details>';
 var level=-1,panel=$('panel'),statusEl=$('status'),statusHold=0;
-function setLevel(n){if(n===level)return;var was=level;level=n;if(was===8&&n!==8&&lp.on){lp.on=false;statusHold=0;}var d=n>=9?phoLevel(n):n>=6?matLevel(n):LEVELS[n];
+function setLevel(n){if(n===level)return;var was=level;level=n;if(was===8&&n!==8&&lp.on){lp.on=false;statusHold=0;}var d=n>=14?astroLevel(n):n>=9?phoLevel(n):n>=6?matLevel(n):LEVELS[n];
   panel.innerHTML='<div class="kicker">'+d.k+'</div><h1>'+d.h+'</h1>'+d.p.map(function(t){return '<p>'+t+'</p>';}).join('')+(fieldMode?(d.fl?'<p class="fld"><b>Field view</b>'+d.fl+'</p>':''):(d.pl?'<p class="fld"><b>Particle view</b>'+d.pl+'</p>':''))+
     (d.mo?'<div class="mohd">Molecular orbitals · energy from the model</div><div class="mos" id="molist"><button class="mo" data-m="all" aria-pressed="'+(molSel==='all')+'"><span class="nm">All electrons</span><span class="el"></span><span class="en">density</span></button>'+
       MOL.rows.slice().reverse().map(function(r){var el='';for(var e=0;e<r.deg*2;e++)el+=e<r.occ*r.deg?'●':'○';return '<button class="mo" data-m="'+r.idx+'" aria-pressed="'+(molSel===r.idx)+'"><span class="nm">'+r.label+(r.tag?'<span class="tg">'+r.tag+'</span>':'')+'</span><span class="el">'+el+'</span><span class="en">'+r.E.toFixed(1).replace('-','−')+' eV</span></button>';}).join('')+'</div>':'')+
@@ -1704,6 +1711,7 @@ function setLevel(n){if(n===level)return;var was=level;level=n;if(was===8&&n!==8
       '<div class="secs"'+(PP.mode==='two'?' style="display:none"':'')+'><label for="ppOpen">Opening (half-width) <output id="ppOo">'+(PP.open>=PP.hmax?'fully open':PP.open.toFixed(2)+' μm')+'</output></label><input type="range" id="ppOpen" min="0.1" max="6.5" step="0.05" value="'+PP.open+'">'+
       '<label for="ppY">Detector height <output id="ppYo">'+PP.yP.toFixed(1)+' μm</output></label><input type="range" id="ppY" min="'+(PP.mode==='two'?-6:-4)+'" max="'+(PP.mode==='two'?6:4)+'" step="0.1" value="'+PP.yP+'"></div>':'')+
     (d.surf?'<label class="togrow"><input type="checkbox" class="sfShow"'+(SF.show?' checked':'')+'> Show the “Light meeting the surface” close-up below the lanes</label>'+'<div class="chips" id="sfchips" role="group" aria-label="Material">'+[['diamond','Diamond'],['glass','Crown glass']].map(function(o){return '<button class="chip" data-s="'+o[0]+'" aria-pressed="'+(SF.med===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>':'')+
+    (d.sun?'<div class="chips" id="sunchips" role="group" aria-label="Sun view">'+[['out','Outside'],['cut','Cutaway']].map(function(o){return '<button class="chip" data-c="'+o[0]+'" aria-pressed="'+(AS.cut===(o[0]==='cut'))+'">'+o[1]+'</button>';}).join('')+'</div>':'')+
     (d.photonLink?'<button class="btn" id="tophoton" style="margin:0 0 10px">Zoom into a light pulse →</button>':'')+
     (d.gem?'<div class="chips" id="gemchips" role="group" aria-label="Diamond shape">'+[['cut','Cut gem'],['section','Cross-section'],['rough','Rough crystal']].map(function(o){return '<button class="chip" data-g="'+o[0]+'" aria-pressed="'+(GEM.sel===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>':'')+
     (d.sec?'<div class="secs"><label for="secx">Where light enters <output id="secxo">'+SEC.x.toFixed(2)+'</output></label><input type="range" id="secx" min="-0.52" max="0.52" step="0.01" value="'+SEC.x+'">'+
@@ -1714,7 +1722,7 @@ function setLevel(n){if(n===level)return;var was=level;level=n;if(was===8&&n!==8
       '<button class="btn" id="mqGo" style="margin:2px 0 8px">Measure a 2p electron</button><div id="mqR" style="font-size:12.5px;color:var(--muted);margin-bottom:10px"></div>':'')+
     (d.orb?'<div class="chips" id="orbchips" role="group" aria-label="Orbitals to show">'+[['all','All six electrons'],['1s','1s'],['2s','2s'],['2p','2p']].map(function(o){return '<button class="chip" data-o="'+o[0]+'" aria-pressed="'+(orbSel===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>':'')+
     d.eq.map(function(e){return '<div class="eq"><div class="m">'+e[0]+'</div><div class="n">'+e[1]+'</div></div>';}).join('')+
-    '<ul class="facts">'+d.f.map(function(f){return '<li><span>'+f[0]+'</span><span>'+f[1]+'</span></li>';}).join('')+'</ul>'+SIMPL;
+    '<ul class="facts">'+d.f.map(function(f){return '<li><span>'+f[0]+'</span><span>'+f[1]+'</span></li>';}).join('')+'</ul>'+(d.simpl||SIMPL);
   if(d.sec){var ctl=panel.querySelector('#gemchips'),sl=panel.querySelector('.secs'),h1=panel.querySelector('h1');if(ctl&&sl&&h1){h1.after(sl);h1.after(ctl);}}
   panel.scrollTop=0;
   panel.querySelectorAll('#molist .mo').forEach(function(b){b.onclick=function(){var m=b.dataset.m==='all'?'all':+b.dataset.m;setMolSel(m);
@@ -1756,6 +1764,7 @@ function setLevel(n){if(n===level)return;var was=level;level=n;if(was===8&&n!==8
   panel.querySelectorAll('.sfShow').forEach(function(c){c.onchange=function(){SF.show=c.checked;try{localStorage.setItem('scaleZoom.surface',SF.show?'1':'0');}catch(e){}
     setStatus(SF.show?'The close-up sits just below the lowest lane, at the same scale. Pan down to it (middle-drag or two fingers) or click “At the surface”.':'Surface close-up hidden.',8);};});
   panel.querySelectorAll('#sfchips .chip').forEach(function(b){b.onclick=function(){SF.med=b.dataset.s;var l=level;level=-1;setLevel(l);};});
+  panel.querySelectorAll('#sunchips .chip').forEach(function(b){b.onclick=function(){AS.cut=b.dataset.c==='cut';if(!AS.cut)AS.walk.on=false;panel.querySelectorAll('#sunchips .chip').forEach(function(c){c.setAttribute('aria-pressed',String(c===b));});};});
   if($('tophoton'))$('tophoton').onclick=function(){setBranch('pho');z=zT=LEVEL_Z[9];};
   if($('secx')){$('secx').oninput=function(){SEC.x=+this.value;$('secxo').textContent=SEC.x.toFixed(2);};$('seca').oninput=function(){SEC.ang=+this.value;$('secao').textContent=SEC.ang+'°';};}
   panel.querySelectorAll('#matchips .chip').forEach(function(b){b.onclick=function(){matSel=b.dataset.mt;vt.phase=0;statusHold=0;var l=level;level=-1;setLevel(l);};});
@@ -1777,7 +1786,7 @@ function resize(){W=canvas.clientWidth||1;H=canvas.clientHeight||1;renderer.setS
 window.addEventListener('resize',resize);resize();
 var ptrs={},pinch=0,pmid=null,tapT=0,tapX=0,tapY=0,qTmpPan=new V3(),panR=new V3(),panU=new V3();
 // pan: middle-button drag (or Shift + left drag) slides the view; the shift is scaled to the current view height, so it feels the same at every zoom
-function panBy(dx,dy){var view=Math.pow(10,z+15),k=view/Math.max(1,H);panR.setFromMatrixColumn(camera.matrixWorld,0);panU.setFromMatrixColumn(camera.matrixWorld,1);
+function panBy(dx,dy){var view=Math.pow(10,z+(branch==='astro'?0:15)),k=view/Math.max(1,H);panR.setFromMatrixColumn(camera.matrixWorld,0);panU.setFromMatrixColumn(camera.matrixWorld,1);
   pan.addScaledVector(panR,-dx*k).addScaledVector(panU,dy*k);}
 function resetPan(){pan.set(0,0,0);}
 canvas.addEventListener('mousedown',function(e){if(e.button===1)e.preventDefault();});   // stop the browser's middle-click autoscroll
@@ -1802,7 +1811,7 @@ canvas.addEventListener('wheel',function(e){e.preventDefault();var dy=e.deltaMod
 $('zin').onclick=function(){zT=clamp(zT-0.5,zLo(),zHi());};
 $('zout').onclick=function(){zT=clamp(zT+0.5,zLo(),zHi());};
 $('bdemo').onclick=function(){DEMO[level>=0?level:4][1]();};
-document.querySelectorAll('.rung[data-level]').forEach(function(b){b.onclick=function(){resetPan();var lv=+b.dataset.level,nb=lv>=9?'pho':lv>=6?'mat':'main';zT=LEVEL_Z[lv];if(nb!==branch){setBranch(nb);z=zT;}PP.on=lv===13;if(lv===13){PP.t=0;theta=Math.PI/2-0.1;phi=Math.PI/2-0.05;}if(lv===9&&SF.show){zT=-4.5;pan.set(0,-2.8e9,0);}if(lv===12){SF.show=true;PP.on=false;sfPlace();pan.set((SF.px+0.1)*1e9,(SF.py+0.6)*1e9,0);theta=Math.PI/2-0.12;phi=Math.PI/2-0.06;}};});
+document.querySelectorAll('.rung[data-level]').forEach(function(b){b.onclick=function(){resetPan();var lv=+b.dataset.level,nb=lv>=14?'astro':lv>=9?'pho':lv>=6?'mat':'main';if(nb==='astro'){astroGo(lv);return;}zT=LEVEL_Z[lv];if(nb!==branch){setBranch(nb);z=zT;}PP.on=lv===13;if(lv===13){PP.t=0;theta=Math.PI/2-0.1;phi=Math.PI/2-0.05;}if(lv===9&&SF.show){zT=-4.5;pan.set(0,-2.8e9,0);}if(lv===12){SF.show=true;PP.on=false;sfPlace();pan.set((SF.px+0.1)*1e9,(SF.py+0.6)*1e9,0);theta=Math.PI/2-0.12;phi=Math.PI/2-0.06;}};});
 $('bview').onclick=function(){fieldMode=!fieldMode;this.textContent=fieldMode?'View: fields':'View: particles';this.setAttribute('aria-pressed',String(fieldMode));var l=level;level=-1;setLevel(l);};
 $('bpause').onclick=function(){paused=!paused;this.textContent=paused?'Play':'Pause';this.setAttribute('aria-pressed',String(paused));};
 
@@ -1864,7 +1873,7 @@ var SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':
 function sup(n){return String(n).split('').map(function(c){return SUP[c]||c;}).join('');}
 function fmtLen(m){var ex=Math.floor(Math.log10(m)+1e-9),man=m/Math.pow(10,ex);man=Math.round(man*10)/10;
   var r2=function(x){return Math.round(x*100)/100;};
-  var unit=m>=0.9995?r2(m)+' m':m>=0.9995e-2?r2(m/1e-2)+' cm':m>=0.9995e-3?r2(m/1e-3)+' mm':m>=0.9995e-6?r2(m/1e-6)+' μm':m>=0.9995e-9?r2(m/1e-9)+' nm':m>=0.9995e-12?r2(m/1e-12)+' pm':m>=0.9995e-16?r2(m/1e-15)+' fm':(Math.round(m/1e-18*10)/10)+' am';
+  var unit=m>=0.9995e9?r2(m/1e9).toLocaleString('en-US')+' million km':m>=0.9995e3?r2(m/1e3).toLocaleString('en-US')+' km':m>=0.9995?r2(m)+' m':m>=0.9995e-2?r2(m/1e-2)+' cm':m>=0.9995e-3?r2(m/1e-3)+' mm':m>=0.9995e-6?r2(m/1e-6)+' μm':m>=0.9995e-9?r2(m/1e-9)+' nm':m>=0.9995e-12?r2(m/1e-12)+' pm':m>=0.9995e-16?r2(m/1e-15)+' fm':(Math.round(m/1e-18*10)/10)+' am';
   return unit+' · '+(man===1?'':man+' × ')+'10'+sup(ex)+' m';}
 function nice(x){var p=Math.pow(10,Math.floor(Math.log10(x))),n=x/p;return (n<1.5?1:n<3.5?2:n<7.5?5:10)*p;}
 
@@ -1986,9 +1995,314 @@ function drawMat(dt){
   if(statusHold>0)statusHold-=dt;else if(vt.phase===0&&!(lp.on&&level===8)){var hint=(z>-7.4&&z<-6.15)?'Between atoms and grains: one grain holds billions of atoms in the same orientation.':(z>-4.8&&z<-2.65)?'Between a grain and a gem: a gem diamond is one crystal that grew without any grain boundaries.':matLevel(level).hint;if(statusEl.textContent!==hint)statusEl.textContent=hint;}
 }
 
+/* ---------- astro branch: out from the gem to a person, Earth, the Moon, the Sun and the inner planets (scene units: metres) ---------- */
+// Constants: IAU 2015 nominal solar radius, IERS/IAU GM values, mean Earth radius, mean Earth–Moon distance.
+var AU=1.495978707e11,GM_E=3.986004418e14,GM_M=4.9048695e12,GM_S=1.32712440018e20,R_E=6.371e6,R_M=1.7374e6,D_M=3.844e8,R_S=6.957e8,EPS=23.4393*Math.PI/180,G0=9.81,
+    LAT_G=51.4769*Math.PI/180,FEET=1.17,ISS_R=6.371e6+4.2e5,ISS_P=2*Math.PI*Math.sqrt(Math.pow(6.371e6+4.2e5,3)/3.986004418e14);
+LEVEL_Z.push(0.42,7.3,9.05,9.5,11.62);
+var astroScene=new THREE.Scene();astroScene.background=new THREE.Color(0x090b17);
+var astroBox=document.createElement('div');astroBox.style.display='none';labelBox.appendChild(astroBox);window.__astroBox=astroBox;
+function mkLabelA(html,cls){var d=mkLabel(html,cls);astroBox.appendChild(d);return d;}
+var AS={focus:'path',fb:0,run:false,t:0,drop:0,dropT:0,cut:false,texReq:false,Q:new THREE.Quaternion(),Qloc:new THREE.Quaternion(),
+  CE:new V3(),sun:new V3(),moonP:new V3(),issP:new V3(),pCenter:new V3(),P:[]};
+var SPACE_C=new THREE.Color(0x090b17),SKY_C=new THREE.Color(0x5e85ad),QID=new THREE.Quaternion(),gemW=new V3(),aT=new V3(),aU=new V3(),aR=new V3(),aV=new V3(),aW=new V3(),tgtA=new V3();
+var asAmb=new THREE.AmbientLight(0xffffff,0.3);astroScene.add(asAmb);
+var sunLight=new THREE.PointLight(0xffffff,1.25,0);astroScene.add(sunLight);   // no fall-off: sunlight is the same strength across these scenes
+// planets: JPL approximate Keplerian elements (Standish, valid 1800–2050), J2000 values and rates per century
+var PLAN=[
+  {n:'Mercury',a:0.38709927,e:0.20563593,de:0.00001906,L:252.25032350,dL:149472.67411175,w:77.45779628,dw:0.16047689,R:2.4397e6,col:0xc9bba6},
+  {n:'Venus',a:0.72333566,e:0.00677672,de:-0.00004107,L:181.97909950,dL:58517.81538729,w:131.60246718,dw:0.00268329,R:6.0518e6,col:0xf2deb0},
+  {n:'Earth',a:1.00000261,e:0.01671123,de:-0.00004392,L:100.46457166,dL:35999.37244981,w:102.93768193,dw:0.32327364,R:R_E,col:0x7fb2ff},
+  {n:'Mars',a:1.52371034,e:0.09339410,de:0.00007882,L:-4.55343205,dL:19140.30268499,w:-23.94362959,dw:0.44441088,R:3.3895e6,col:0xe07a52}];
+var T0=(Date.UTC(2026,2,20,12)-Date.UTC(2000,0,1,12))/864e5/36525;   // 20 March 2026, 12:00 UTC (the equinox), in Julian centuries from J2000
+// ecliptic longitude L points along (cos L, 0, −sin L); +y is ecliptic north
+function kepPos(p,T,out){var D=Math.PI/180,e=p.e+p.de*T,w=(p.w+p.dw*T)*D,M=(p.L+p.dL*T)*D-w;M-=2*Math.PI*Math.floor((M+Math.PI)/(2*Math.PI));
+  var E=M;for(var i=0;i<10;i++)E-=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));
+  var x=p.a*(Math.cos(E)-e),y=p.a*Math.sqrt(1-e*e)*Math.sin(E),r=Math.hypot(x,y)*AU,lon=Math.atan2(y,x)+w;return out.set(r*Math.cos(lon),0,-r*Math.sin(lon));}
+// Moon: low-precision geocentric longitude and distance (main terms of the lunar theory, good to about a degree)
+function moonPos(T,out){var d=T*36525,D=Math.PI/180,Mp=(134.963+13.064993*d)*D,L=(218.316+13.176396*d)*D+6.289*D*Math.sin(Mp),r=(385001-20905*Math.cos(Mp))*1e3;
+  return out.set(r*Math.cos(L),0,-r*Math.sin(L));}
+// Earth's orientation: axis tilted 23.44° toward ecliptic longitude 90°, turned so it is midday at Greenwich on the start date
+var eHel0=kepPos(PLAN[2],T0,new V3()),sDir=eHel0.clone().negate().normalize(),u1=new V3(1,0,0),u2=new V3(0,-Math.sin(EPS),-Math.cos(EPS));
+var earthEuler=new THREE.Euler(-EPS,Math.atan2(sDir.dot(u2),sDir.dot(u1)),0,'XYZ');
+var nG=new V3(Math.cos(LAT_G),Math.sin(LAT_G),0).applyEuler(earthEuler);   // straight up at Greenwich
+AS.Qloc.setFromUnitVectors(new V3(0,1,0),nG);AS.CE.copy(nG).multiplyScalar(-(R_E+FEET));
+var asLocal=new THREE.Group();asLocal.quaternion.copy(AS.Qloc);astroScene.add(asLocal);
+AS.pCenter.set(0.19,-0.3,-0.47).applyQuaternion(AS.Qloc);
+
+// the gem, sharing the materials branch's geometry
+AS.gem=new THREE.Group();asLocal.add(AS.gem);
+['cut','rough'].forEach(function(k){var G=GEM[k],g=new THREE.Group();
+  g.add(new THREE.Mesh(G.body.geometry,new THREE.MeshPhongMaterial({color:0xd8ecff,transparent:true,opacity:0.2,shininess:140,specular:0xffffff,side:THREE.DoubleSide,depthWrite:false})),
+        new THREE.LineSegments(G.edg.geometry,new THREE.LineBasicMaterial({color:0xeaf4ff,transparent:true,opacity:0.55,depthWrite:false})));
+  g.position.y=G.yoff*3.25e-3;g.scale.setScalar(3.25e-3);AS.gem.add(g);AS['gem_'+k]=g;});
+function glowA(col){var s=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,color:col,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,transparent:true}));s.frustumCulled=false;astroScene.add(s);return s;}
+AS.gemMark=glowA(0xbfe4ff);
+
+// a 1.74 m mannequin facing +z, holding the diamond between thumb and index finger (local frame: gem at the origin, ground at y = −1.17 m)
+var personMat=new THREE.MeshLambertMaterial({color:0x9aa3b8,transparent:true});
+AS.person=new THREE.Group();asLocal.add(AS.person);
+function capsule(a,b,r){var d=new V3().subVectors(b,a),len=d.length(),cyl=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,20,1,true),personMat);
+  cyl.position.addVectors(a,b).multiplyScalar(0.5);cyl.quaternion.setFromUnitVectors(new V3(0,1,0),d.normalize());
+  var s1=new THREE.Mesh(new THREE.SphereGeometry(r,20,12),personMat),s2=s1.clone();s1.position.copy(a);s2.position.copy(b);AS.person.add(cyl,s1,s2);}
+function blob(c,s){var m=new THREE.Mesh(new THREE.SphereGeometry(1,28,18),personMat);m.position.copy(c);m.scale.copy(s);AS.person.add(m);}
+function P3(x,y,zz){return new V3(x,y,zz);}
+capsule(P3(0.01125,0.0009,0),P3(0.034,0.006,-0.06),0.008);          // index finger
+capsule(P3(-0.01275,0.0009,0),P3(-0.03,-0.012,-0.05),0.0095);       // thumb
+blob(P3(0.004,-0.004,-0.1),P3(0.045,0.017,0.052));                   // palm
+capsule(P3(0,-0.006,-0.14),P3(0,-0.03,-0.4),0.031);                  // forearm
+capsule(P3(0,-0.03,-0.4),P3(0,0.27,-0.47),0.042);                    // upper arm
+blob(P3(0.19,-0.02,-0.47),P3(0.19,0.32,0.11));                       // torso
+capsule(P3(0.19,0.27,-0.47),P3(0.19,0.36,-0.47),0.05);               // neck
+blob(P3(0.19,0.46,-0.47),P3(0.085,0.11,0.095));                      // head
+capsule(P3(0.38,0.25,-0.47),P3(0.41,-0.05,-0.47),0.04);capsule(P3(0.41,-0.05,-0.47),P3(0.42,-0.31,-0.44),0.033);   // other arm
+blob(P3(0.19,-0.33,-0.47),P3(0.17,0.1,0.1));                         // hips
+[0.11,0.27].forEach(function(x){capsule(P3(x,-0.36,-0.47),P3(x,-0.75,-0.46),0.065);capsule(P3(x,-0.75,-0.46),P3(x,-1.11,-0.47),0.05);
+  var f=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.06,0.24),personMat);f.position.set(x,-1.14,-0.42);AS.person.add(f);});
+var groundMat=new THREE.MeshLambertMaterial({color:0x40583e,transparent:true});
+AS.ground=new THREE.Mesh(new THREE.CircleGeometry(2e4,96),groundMat);AS.ground.rotation.x=-Math.PI/2;AS.ground.position.y=-FEET;asLocal.add(AS.ground);   // 20 km disc: its edge sits only 31 m above the true curved surface
+AS.grid=new THREE.GridHelper(20,20,0xb8c4a8,0xb8c4a8);AS.grid.position.y=-FEET+0.002;AS.grid.material.transparent=true;asLocal.add(AS.grid);
+
+// Earth, its air and the space station
+var earthMat=new THREE.MeshPhongMaterial({color:0x2d5d9a,shininess:14,specular:0x222833});
+AS.earth=new THREE.Mesh(new THREE.SphereGeometry(R_E,512,256),earthMat);AS.earth.rotation.copy(earthEuler);AS.earth.position.copy(AS.CE);astroScene.add(AS.earth);
+var ATM_V='varying vec3 vN,vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}';
+var atmMat=new THREE.ShaderMaterial({uniforms:{uA:{value:0},uS:{value:new V3(1,0,0)}},vertexShader:ATM_V,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  fragmentShader:'uniform float uA;uniform vec3 uS;varying vec3 vN,vV;void main(){vec3 n=normalize(vN);float f=pow(1.-max(dot(n,normalize(vV)),0.),3.);float day=smoothstep(-.25,.35,dot(n,uS));gl_FragColor=vec4(vec3(.36,.62,1.)*f*uA*(.08+.92*day),1.);}'});
+AS.atm=new THREE.Mesh(new THREE.SphereGeometry(R_E+1e5,128,64),atmMat);AS.atm.position.copy(AS.CE);astroScene.add(AS.atm);
+function ringLine(n,col,fn){var p=[];for(var i=0;i<=n;i++){var v=fn(i/n*2*Math.PI);p.push(v.x,v.y,v.z);}var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));
+  var l=new THREE.Line(g,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.6,depthWrite:false}));l.frustumCulled=false;astroScene.add(l);return l;}
+// ISS: 51.64° inclination; the orbit is chosen so its northernmost point is over Greenwich
+var axE=new V3(0,1,0).applyEuler(earthEuler),gEq=nG.clone().addScaledVector(axE,-nG.dot(axE)).normalize(),ISS_I=51.64*Math.PI/180;
+var issE1=axE.clone().multiplyScalar(Math.sin(ISS_I)).addScaledVector(gEq,Math.cos(ISS_I)),issN=axE.clone().multiplyScalar(Math.cos(ISS_I)).addScaledVector(gEq,-Math.sin(ISS_I)),issE2=new V3().crossVectors(issN,issE1);
+AS.issOrb=ringLine(256,0xffe2a0,function(a){return issE1.clone().multiplyScalar(Math.cos(a)*ISS_R).addScaledVector(issE2,Math.sin(a)*ISS_R);});AS.issOrb.position.copy(AS.CE);
+AS.issMark=glowA(0xffe2a0);
+
+// Moon (tidally locked: near side, longitude 0 of the map, faces Earth)
+var moonMat=new THREE.MeshLambertMaterial({color:0x9a9a9a});
+AS.moon=new THREE.Mesh(new THREE.SphereGeometry(R_M,96,48),moonMat);astroScene.add(AS.moon);
+AS.moonOrb=ringLine(360,0x9fb6d4,function(a){return new V3(Math.cos(a)*D_M,0,-Math.sin(a)*D_M);});AS.moonOrb.position.copy(AS.CE);
+AS.moonMark=glowA(0xd8dce6);AS.earthMark=glowA(0x7fb2ff);
+
+// Sun: white 5,772 K surface with limb darkening I(μ) = 1 − u(1 − μ), u ≈ 0.5 (red) to 0.75 (blue); optional cutaway of the front half
+var SUN_F='uniform float uCut;varying vec3 vN,vV,vP;void main(){if(uCut>.5&&vP.z>0.)discard;float mu=max(dot(normalize(vN),normalize(vV)),0.);'+
+  'vec3 u=vec3(.5,.6,.75);gl_FragColor=vec4(vec3(1.,.96,.92)*(1.-u*(1.-mu)),1.);}';
+var sunMat=new THREE.ShaderMaterial({uniforms:{uCut:{value:0}},fragmentShader:SUN_F,
+  vertexShader:'varying vec3 vN,vV,vP;void main(){vP=position;vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}'});
+AS.sunM=new THREE.Mesh(new THREE.SphereGeometry(1,128,64),sunMat);AS.sunM.scale.setScalar(R_S);astroScene.add(AS.sunM);
+// cut faces: core (fusion, inside ~0.25 R), radiative zone (to 0.713 R, Christensen-Dalsgaard et al. 1991), convection zone; colored as a temperature key
+var CUT_F='varying vec3 vP;void main(){float r=length(vP.xy);vec3 c;'+
+  'if(r<.25)c=mix(vec3(1.,1.,.92),vec3(1.,.86,.45),r/.25);else if(r<.713)c=mix(vec3(1.,.66,.25),vec3(.95,.38,.12),(r-.25)/.463);else c=mix(vec3(.85,.26,.08),vec3(.62,.14,.05),(r-.713)/.287);'+
+  'float b=min(min(abs(r-.25),abs(r-.713)),abs(r-.995));c*=.82+.18*smoothstep(0.,.006,b);gl_FragColor=vec4(c,1.);}';
+var cutMat=new THREE.ShaderMaterial({fragmentShader:CUT_F,side:THREE.DoubleSide,vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}'});
+AS.cutG=new THREE.Group();AS.cutG.add(new THREE.Mesh(new THREE.CircleGeometry(1,160),cutMat));
+AS.cutG.scale.setScalar(R_S);astroScene.add(AS.cutG);
+AS.cmp=new THREE.Mesh(AS.earth.geometry,earthMat);AS.cmp.rotation.copy(earthEuler);astroScene.add(AS.cmp);   // Earth at the same scale, beside the Sun
+AS.sunMark=glowA(0xfff6e8);
+// energy leaving the Sun: a random walk through the radiative zone, then convection, then free flight (drawn on the cut face)
+AS.walk={on:false,t:0,pts:null,nw:0,nc:0};
+var walkGeo=new THREE.BufferGeometry();walkGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(12000*3),3));
+AS.walkL=new THREE.Line(walkGeo,new THREE.LineBasicMaterial({color:0xfffbe8,transparent:true,opacity:0.9,depthTest:false}));AS.walkL.frustumCulled=false;AS.walkL.scale.setScalar(R_S);astroScene.add(AS.walkL);
+function genWalk(){var p=[],x=0.02,y=0,s=0.017,g=0;p.push(x,y);
+  while(Math.hypot(x,y)<0.713&&g++<9000){var a=rnd()*6.2832;x+=s*Math.cos(a);y+=s*Math.sin(a);if(x<0.004)x=0.008-x;p.push(x,y);}
+  var nw=p.length/2,a0=Math.atan2(y,x),r0=Math.hypot(x,y);
+  for(var i=1;i<=40;i++){var u=i/40,r=r0+(0.995-r0)*u,an=a0+0.08*Math.sin(u*Math.PI)+0.02*Math.sin(u*19);p.push(r*Math.cos(an),r*Math.sin(an));}
+  var nc=p.length/2,ae=Math.atan2(p[p.length-1],p[p.length-2]);for(i=1;i<=12;i++){var re=0.995+i*0.06;p.push(re*Math.cos(ae),re*Math.sin(ae));}
+  AS.walk.pts=p;AS.walk.nw=nw;AS.walk.nc=nc;var arr=walkGeo.attributes.position.array;for(i=0;i<p.length/2&&i<12000;i++){arr[i*3]=p[i*2];arr[i*3+1]=p[i*2+1];arr[i*3+2]=0.004;}
+  walkGeo.attributes.position.needsUpdate=true;}
+
+// inner planets: orbits (in the ecliptic plane), true-size spheres and markers
+PLAN.forEach(function(p){var D=Math.PI/180,e=p.e+p.de*T0,w=(p.w+p.dw*T0)*D,b=p.a*Math.sqrt(1-e*e);
+  p.orb=ringLine(512,p.col,function(E){var x=p.a*(Math.cos(E)-e),y=b*Math.sin(E),r=Math.hypot(x,y)*AU,lon=Math.atan2(y,x)+w;return new V3(r*Math.cos(lon),0,-r*Math.sin(lon));});
+  p.orb.material.opacity=0.45;p.pos=new V3();p.mark=glowA(p.col);
+  if(p.n!=='Earth'){p.mesh=new THREE.Mesh(new THREE.SphereGeometry(p.R,48,24),new THREE.MeshLambertMaterial({color:p.col}));astroScene.add(p.mesh);}});
+
+// field view: Newtonian gravity arrows in the screen plane around the main body
+var ARN=15,arGeo=new THREE.BufferGeometry();arGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(ARN*ARN*6*3),3));
+AS.arrows=new THREE.LineSegments(arGeo,new THREE.LineBasicMaterial({color:0xf0b34a,transparent:true,opacity:0.5,depthTest:false}));AS.arrows.frustumCulled=false;astroScene.add(AS.arrows);
+function astroArrows(view){var on=fieldMode&&z>4.8;AS.arrows.visible=on;if(!on)return;
+  var B=(AS.fb>0.5||z>10.3)?[[AS.sun,GM_S,R_S]]:z>8.1?[[AS.CE,GM_E,R_E],[AS.moonP,GM_M,R_M]]:[[AS.CE,GM_E,R_E]],c=B[0][0],sp=view/9,h=(ARN-1)/2,arr=arGeo.attributes.position.array,n=0;
+  aR.setFromMatrixColumn(camera.matrixWorld,0);aU.setFromMatrixColumn(camera.matrixWorld,1);AS.arrows.position.copy(c);
+  var gHi=B[0][1]/(sp*sp),gLo=B[0][1]/(sp*h*sp*h*2);
+  for(var i=0;i<ARN;i++)for(var j=0;j<ARN;j++){aV.copy(aR).multiplyScalar((i-h)*sp).addScaledVector(aU,(j-h)*sp);aW.set(0,0,0);var inside=false;
+    for(var k=0;k<B.length;k++){aT.copy(B[k][0]).sub(c).sub(aV);var d=aT.length();if(d<B[k][2]*1.05)inside=true;aW.addScaledVector(aT,B[k][1]/(d*d*d));}
+    if(inside)continue;var g=aW.length(),len=sp*0.85*clamp((Math.log(g)-Math.log(gLo))/(Math.log(gHi)-Math.log(gLo)),0.12,1);aW.normalize();
+    aT.copy(aV).addScaledVector(aW,len);var hx=aW.clone().multiplyScalar(-len*0.3),px=new V3().crossVectors(aW,aR.clone().cross(aU)).multiplyScalar(len*0.16);
+    [aV,aT,aT,aT.clone().add(hx).add(px),aT,aT.clone().add(hx).sub(px)].forEach(function(v){arr[n++]=v.x;arr[n++]=v.y;arr[n++]=v.z;});}
+  arGeo.setDrawRange(0,n/3);arGeo.attributes.position.needsUpdate=true;}
+
+// labels
+var LA={person:mkLabelA('A person, 1.74 m tall'),gem:mkLabelA('the 1-carat diamond'),grid:mkLabelA('1 m squares'),
+  earth:mkLabelA('Earth · 12,742 km across','big'),green:mkLabelA('Greenwich, London: the person is here'),air:mkLabelA('air: 99% lies below 31 km'),
+  iss:mkLabelA('Space station · 420 km up'),moon:mkLabelA('Moon · 3,474 km across'),moonOrb:mkLabelA('Moon’s orbit · 384,400 km on average'),
+  em:mkLabelA('Earth and Moon, both to scale','big'),sun:mkLabelA('Sun · 1.39 million km across','big'),cmp:mkLabelA('↑ Earth at the same scale (really 150 million km away)'),
+  core:mkLabelA('core · 15.7 million K · fusion'),rad:mkLabelA('radiative zone'),conv:mkLabelA('convection zone'),surf:mkLabelA('surface · 5,772 K'),
+  ss:mkLabelA('The inner solar system on 20 March 2026','big'),sunS:mkLabelA('Sun')};
+PLAN.forEach(function(p){p.lab=mkLabelA(p.n);});
+
+function astroEnter(){if(AS.texReq)return;AS.texReq=true;
+  // satellite and lunar maps from the three.js r128 examples (derived from NASA imagery); the plain colors stay if they cannot load
+  var ld=new THREE.TextureLoader(),base='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/';ld.setCrossOrigin('anonymous');
+  ld.load(base+'earth_atmos_2048.jpg',function(tx){tx.anisotropy=renderer.capabilities.getMaxAnisotropy();earthMat.map=tx;earthMat.color.set(0xffffff);earthMat.needsUpdate=true;});
+  ld.load(base+'moon_1024.jpg',function(tx){moonMat.map=tx;moonMat.color.set(0xffffff);moonMat.needsUpdate=true;});}
+function astroPlace(){var T=T0+AS.t/(36525*86400);
+  kepPos(PLAN[2],T,aT);AS.sun.copy(AS.CE).sub(aT);sunLight.position.copy(AS.sun);
+  PLAN.forEach(function(p){if(p.n==='Earth')p.pos.copy(AS.CE);else p.pos.copy(AS.sun).add(kepPos(p,T,aT));if(p.mesh)p.mesh.position.copy(p.pos);p.orb.position.copy(AS.sun);});
+  moonPos(T,aT);AS.moonP.copy(AS.CE).add(aT);AS.moon.position.copy(AS.moonP);AS.moon.rotation.set(0,Math.atan2(-aT.z,aT.x)+Math.PI,0);
+  var a=-0.35+2*Math.PI*AS.t/ISS_P;AS.issP.copy(AS.CE).addScaledVector(issE1,Math.cos(a)*ISS_R).addScaledVector(issE2,Math.sin(a)*ISS_R);
+  AS.sunM.position.copy(AS.sun);AS.cutG.position.copy(AS.sun);AS.walkL.position.copy(AS.sun);}
+function setGlow(s,pos,size,a){s.visible=a>0.01;if(!s.visible)return;s.position.copy(pos);s.scale.setScalar(size);s.material.opacity=a;}
+var asDemoRead='';
+function drawAstro(dt){
+  var view=Math.pow(10,z),dist=view/2/Math.tan(camera.fov*Math.PI/360);
+  if(AS.focus==='sun'&&z>10.9&&zT>10.9)AS.focus='path';   // zooming out past the planets lets go of the Sun
+  var fT=AS.focus==='sun'?1:0;AS.fb+=(fT-AS.fb)*Math.min(1,dt*2.2);if(Math.abs(AS.fb-fT)<1e-3)AS.fb=fT;var fb=ease(AS.fb);
+  var warp=level===16||level===17?1e5:level===18?2e6:300;if(AS.run&&!paused)AS.t+=dt*warp;
+  astroPlace();
+  // camera: local "up" near the ground turns into ecliptic north far out; the target follows the zoom path, gem → person → Earth → Sun
+  AS.Q.copy(AS.Qloc).slerp(QID,smooth(7.6,8.8,z));
+  tgtA.set(0,0,0).lerp(AS.pCenter,smooth(-0.35,0.3,z));
+  aT.subVectors(AS.CE,tgtA);var L1=aT.length();tgtA.addScaledVector(aT,Math.min(1,0.6*view*smooth(2.4,3.6,z)/L1));
+  aT.subVectors(AS.sun,tgtA);var L2=aT.length();tgtA.addScaledVector(aT,Math.min(1,0.45*view*smooth(9.6,10.2,z)/L2));
+  tgtA.lerp(AS.sun,fb);
+  var pm=z<2?1.45:z<3.4?1.0:z<7.0?0.3:z<7.4?1.0:2.99;if(phi>pm)phi+=(pm-phi)*Math.min(1,dt*(z>3.4&&z<7?2.5:6));   // look down on Greenwich, satellite-style, while zooming out to the whole Earth
+  if(level===17&&AS.cut){var th=Math.PI/2+2*Math.PI*Math.round((theta-Math.PI/2)/(2*Math.PI));theta+=(th-theta)*Math.min(1,dt*2.5);phi+=(1.3-phi)*Math.min(1,dt*2.5);}   // face the cut
+  aV.set(Math.sin(phi)*Math.cos(theta),Math.cos(phi),Math.sin(phi)*Math.sin(theta)).applyQuaternion(AS.Q).multiplyScalar(dist);
+  camera.up.set(0,1,0).applyQuaternion(AS.Q);camera.position.copy(tgtA).add(pan).add(aV);
+  camera.near=dist*0.02;camera.far=dist*400;camera.lookAt(aW.copy(tgtA).add(pan));camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+  aR.setFromMatrixColumn(camera.matrixWorld,0);aU.setFromMatrixColumn(camera.matrixWorld,1);
+  setLevel(AS.fb>0.5&&z<10.6?17:z<3.2?14:z<8.1?15:z<10.3?16:18);
+  asAmb.intensity=0.32-0.27*smooth(2.5,4.5,z);astroScene.background.copy(SPACE_C).lerp(SKY_C,smooth(-1.3,-0.6,z)*(1-smooth(1.4,3.0,z)));   // daytime sky near the ground, black space above
+  // drop demo: free fall from rest in real time, h = ½gt²
+  if(AS.drop>0&&!paused){AS.dropT+=dt;var hF=FEET-0.0035,tF=Math.sqrt(2*hF/G0);
+    if(AS.drop===1){var y=AS.dropT<0?0:-0.5*G0*AS.dropT*AS.dropT;if(AS.dropT>=tF){y=-hF;AS.drop=2;AS.dropT=0;}AS.gem.position.y=y;}
+    else if(AS.drop===2&&AS.dropT>2.2){AS.drop=3;AS.dropT=0;}else if(AS.drop===3){var u=ease(AS.dropT/1.2);AS.gem.position.y=-hF*(1-u);if(AS.dropT>=1.2){AS.drop=0;AS.gem.position.y=0;}}}
+  // near: gem, person, ground
+  AS.gem.visible=z<0.9;AS.gem_cut.visible=GEM.sel!=='rough';AS.gem_rough.visible=GEM.sel==='rough';
+  gemW.copy(AS.gem.position).applyQuaternion(AS.Qloc);setGlow(AS.gemMark,gemW,view*0.03,smooth(-0.9,-0.5,z)*(1-smooth(1.0,1.4,z))*0.9);
+  var pa=smooth(-1.45,-1.0,z)*(1-smooth(2.6,3.2,z));AS.person.visible=pa>0.01;personMat.opacity=pa;personMat.transparent=pa<0.999;
+  var ga=smooth(-1.2,-0.6,z)*(1-smooth(2.9,3.5,z));AS.ground.visible=ga>0.01;groundMat.opacity=ga;groundMat.transparent=ga<0.999;
+  var gr=smooth(-0.9,-0.4,z)*(1-smooth(1.3,1.9,z));AS.grid.visible=gr>0.01;AS.grid.material.opacity=0.35*gr;
+  // Earth and its surroundings
+  AS.earth.visible=z>2.95;var at=smooth(3.6,4.6,z);AS.atm.visible=at>0.01;atmMat.uniforms.uA.value=at;
+  atmMat.uniforms.uS.value.subVectors(AS.sun,AS.CE).normalize().transformDirection(camera.matrixWorldInverse);
+  var ia=smooth(5.9,6.4,z)*(1-smooth(8.0,8.5,z));AS.issOrb.visible=ia>0.01;AS.issOrb.material.opacity=0.55*ia;setGlow(AS.issMark,AS.issP,view*0.022,ia);
+  AS.moon.visible=z>6.5;var mo=smooth(7.8,8.4,z)*(1-smooth(10.8,11.3,z))*(1-fb);AS.moonOrb.visible=mo>0.01;AS.moonOrb.material.opacity=0.5*mo;
+  var mk=smooth(8.2,8.7,z)*(1-smooth(10.2,10.6,z))*(1-fb);setGlow(AS.moonMark,AS.moonP,view*0.022,mk*0.8);setGlow(AS.earthMark,AS.CE,view*0.03,mk*0.6);
+  // Sun
+  AS.sunM.visible=z>8||fb>0;var cutOn=AS.cut&&fb>0.5&&z<10.3;sunMat.uniforms.uCut.value=cutOn?1:0;AS.cutG.visible=cutOn;
+  var ca=fb*(1-smooth(9.9,10.3,z));AS.cmp.visible=ca>0.5;AS.cmp.position.copy(AS.sun).addScaledVector(aR,-1.15*R_S).addScaledVector(aU,-1.0*R_S);
+  // energy walk
+  if(AS.walk.on&&cutOn){if(!paused)AS.walk.t+=dt;var w=AS.walk,tt=w.t,nShow=tt<9?Math.floor(w.nw*Math.pow(tt/9,1.6)):tt<12?w.nw+Math.floor((w.nc-w.nw)*(tt-9)/3):Math.min(w.pts.length/2,w.nc+Math.floor((tt-12)*14));
+    walkGeo.setDrawRange(0,Math.max(2,nShow));AS.walkL.visible=true;
+    if(tt>9&&tt<9.1&&statusHold<5)setStatus('Out of the radiative zone: from here the gas boils, and rising hot plumes carry the energy the last 30% of the way in a few weeks.',8);
+    if(tt>12&&tt<12.1)setStatus('At the surface the light flies free. It reaches Earth 8.3 minutes later, after a journey through the Sun that took on the order of 100,000 years.',9);}
+  else AS.walkL.visible=false;
+  // planets
+  var po=smooth(9.7,10.3,z);PLAN.forEach(function(p){p.orb.visible=po>0.01;p.orb.material.opacity=0.45*po;setGlow(p.mark,p.pos,view*0.016,smooth(9.9,10.4,z));});
+  setGlow(AS.sunMark,AS.sun,view*0.016,smooth(9.9,10.4,z)*(1-fb));
+  astroArrows(view);
+  renderer.render(astroScene,camera);
+  // labels
+  var lp=smooth(-0.4,0,z)*(1-smooth(1.4,1.8,z));place(LA.person,aT.set(0.19,0.66,-0.47).applyQuaternion(AS.Qloc),lp);
+  place(LA.gem,gemW,smooth(-0.9,-0.5,z)*(1-smooth(1.0,1.4,z)),0,-18);
+  place(LA.grid,aT.set(2.6,-FEET,1.2).applyQuaternion(AS.Qloc),gr*smooth(0.0,0.4,z));
+  var ea=smooth(6.4,6.9,z)*(1-smooth(7.9,8.3,z));place(LA.earth,aT.copy(AS.CE).addScaledVector(aU,R_E*1.13),ea);
+  place(LA.green,aT.set(0,0,0),smooth(3.6,4.2,z)*(1-smooth(6.4,6.8,z)),0,-16);
+  place(LA.air,aT.copy(AS.CE).addScaledVector(aR,-0.72*(R_E+1e5)).addScaledVector(aU,-0.72*(R_E+1e5)),smooth(6.6,7.0,z)*(1-smooth(7.7,8.0,z)),-92,14);
+  place(LA.iss,AS.issP,ia*(1-smooth(7.6,7.9,z)),0,-16);
+  place(LA.moon,AS.moonP,mk,-72,-18);place(LA.moonOrb,aT.copy(AS.CE).addScaledVector(aR,-D_M),mo*(1-smooth(9.8,10.3,z)),0,16);
+  place(LA.em,aT.copy(AS.CE).addScaledVector(aU,D_M*1.22),mk*(1-smooth(9.5,9.8,z)));
+  place(LA.sun,aT.copy(AS.sun).addScaledVector(aU,R_S*1.18),fb*(1-smooth(9.9,10.3,z)));
+  place(LA.cmp,AS.cmp.position,ca,0,16);
+  var cl=cutOn?1:0;   // zone labels on the left half of the cut; the energy walk is drawn on the right half
+  place(LA.core,aT.copy(AS.sun).addScaledVector(new V3(-0.1,-0.03,0.01),R_S),cl,-40,0);place(LA.rad,aT.copy(AS.sun).addScaledVector(new V3(-0.48,0.2,0.01),R_S),cl);
+  place(LA.conv,aT.copy(AS.sun).addScaledVector(new V3(-0.8,-0.36,0.01),R_S),cl,-6,0);place(LA.surf,aT.copy(AS.sun).addScaledVector(new V3(-0.62,-0.85,0.01),R_S),cl,-40,12);
+  var sa=smooth(10.6,11.0,z)*(1-fb);place(LA.ss,aT.copy(AS.sun).addScaledVector(aU,1.28*AU),sa);place(LA.sunS,AS.sun,sa,0,-16);
+  PLAN.forEach(function(p){place(p.lab,p.pos,smooth(10.3,10.7,z),0,-15);});
+  // scale bar, readouts, hints
+  var mpp=view/H,len=nice(110*mpp);$('sbline').style.width=(len/mpp).toFixed(0)+'px';$('sbtext').textContent=fmtLen(len);
+  $('viewread').textContent='View height ≈ '+fmtLen(view).split(' · ')[0];
+  var want=(level===15||level===16||level===18)&&AS.run?'Stop time':level===17&&AS.walk.on?'Follow the energy again':DEMO[level][0];if($('bdemo').textContent!==want)$('bdemo').textContent=want;
+  if(statusHold>0)statusHold-=dt;else if(AS.drop===0){var hint=(z>1.5&&z<3.4)?'Zooming out over the ground: the person is now far too small to see.':(z>3.6&&z<5.6)?'At this scale Earth still looks flat, and the satellite map is too coarse to show streets. The curve shows once the view is a few hundred kilometers across.':
+      (z>9.5&&z<11.1&&AS.fb<0.5)?'Between Earth and the Sun: 150 million km of almost empty space.':astroLevel(level).hint;if(statusEl.textContent!==hint)statusEl.textContent=hint;}
+}
+function astroGo(lv){resetPan();statusHold=0;var f=lv===17?'sun':'path';if(branch!=='astro'){setBranch('astro');AS.focus=f;AS.fb=f==='sun'?1:0;z=zT=LEVEL_Z[lv];}else{AS.focus=f;zT=LEVEL_Z[lv];}}
+function astroDrop(){if(branch!=='astro'||level!==14)astroGo(14);if(AS.drop===0){AS.drop=1;AS.dropT=Math.abs(z-LEVEL_Z[14])>0.3?-1.2:0;var hF=FEET-0.0035,tF=Math.sqrt(2*hF/G0);
+  setStatus('Let go: in real time it falls '+hF.toFixed(2)+' m in '+tF.toFixed(2)+' s and lands at '+(G0*tF).toFixed(1)+' m/s. Every object would take the same time without air; for a 0.2 g diamond the air changes it by only about 0.1%.',9);}}
+function astroRun(){var L=branch==='astro'?level:15;if(branch!=='astro')astroGo(15);AS.run=!AS.run;
+  if(AS.run)setStatus(L===15||L===14?'Time runs 300 times faster: the space station laps Earth every 18.6 s instead of 92.8 minutes. Earth’s own spin is held still.':L===16||L===17?'Time runs 100,000 times faster: one orbit of the Moon (27.3 days) takes 24 s.':'Time runs 2 million times faster: one Earth year takes 16 s, and Mercury goes round in 3.8 s.',9);}
+function astroWalk(){if(branch!=='astro'||level!==17)astroGo(17);AS.cut=true;genWalk();AS.walk.on=true;AS.walk.t=0;var l=level;level=-1;setLevel(l);
+  setStatus('A packet of energy made by fusion in the core. In the radiative zone it is absorbed and re-emitted by the plasma again and again, each time in a random direction. The steps are drawn about 10¹⁰ times too long; real ones are around a millimeter.',12);}
+DEMO[14]=['Let go of the diamond',astroDrop];DEMO[15]=['Run time ×300',astroRun];DEMO[16]=['Run time ×100,000',astroRun];DEMO[17]=['Follow the energy out',astroWalk];DEMO[18]=['Run time ×2,000,000',astroRun];
+var ASIMPL='<details><summary>What this model simplifies</summary><ul>'+
+ '<li>The person is a plain mannequin, posed to show the diamond.</li>'+
+ '<li>Earth’s daily spin is held still at midday in Greenwich on 20 March 2026, so that spot stays sunlit. The space station’s orbit is drawn with its northernmost point over Greenwich.</li>'+
+ '<li>Earth’s surface is a cloud-free satellite map. Earth is slightly flattened in reality (21 km wider at the equator than pole to pole); here it is a sphere.</li>'+
+ '<li>All orbits are drawn in one flat plane. Real ones tilt by up to 7° (Mercury), and the Moon’s by 5°. The Moon’s orbit line is a circle at its average distance; the Moon itself is placed at its computed distance.</li>'+
+ '<li>Planet and Moon positions come from published mean orbital elements (JPL, Standish) and the main terms of the lunar theory, good to about a degree. Earth stands in for the Earth–Moon center of mass.</li>'+
+ '<li>The glowing markers on planets, the Moon and the space station are not to scale. The spheres themselves are.</li>'+
+ '<li>The Sun’s limb darkening uses the simple linear law. Inside the cutaway, the colors are a temperature key, not what you would see, and the zone boundaries are from the standard solar model.</li>'+
+ '<li>The random walk is drawn with steps about 10¹⁰ times too long, and with far fewer of them; the time it represents is an estimate that ranges from about 10,000 to 170,000 years.</li>'+
+ '<li>Gravity is Newton’s. Einstein’s corrections are tiny at these scales; they come in the next part of the zoom.</li></ul></details>';
+function astroLevel(n){var FL='The arrows show gravity’s pull at each point in the screen’s plane, from Newton’s law g = GM/r². Length is on a log scale: each step longer is several times stronger.',
+  PL='Switch to the field view to see gravity’s pull drawn as arrows.';
+  if(n===14)return {k:'Everyday scale · gravity',h:'A diamond in your fingers',
+    p:['Zoom out from the gem and it is a speck between two fingertips: 6.5 mm across, held by a person 1.74 m tall. The ground is marked in 1 m squares.',
+       'Everything so far was the electromagnetic and nuclear forces. Here gravity shows up. It pulls the 0.2 g diamond down with about 2 millinewtons. The fingers hold it up by friction, and friction is electromagnetic: the electron clouds of skin and diamond pushing against each other and catching.',
+       'Gravity is by far the weakest force. Between two protons the electric push is about 10³⁶ times stronger than their gravity. Gravity wins at large scales only because it always attracts and nothing cancels it, while positive and negative charges cancel out in bulk matter.',
+       'The diamond’s mass is also energy, E = mc²: 0.2 g is 1.8 × 10¹³ joules, about a 4-kiloton explosion. Almost none of it can be released. Burning the diamond would free only about 6.6 kJ.'],
+    eq:[['<i>F</i> = <i>mg</i>','Weight near Earth’s surface. Here <i>g</i> ≈ 9.81 m/s², so 0.2 g weighs about 2 mN.'],
+        ['<i>h</i> = ½ <i>g t</i>²','Falling from rest. From 1.17 m: 0.49 s, landing at 4.8 m/s. Without air, a feather would take the same time.']],
+    f:[['1 carat','0.2 g'],['Its weight','≈ 2 mN'],['g at Greenwich','≈ 9.81 m/s²'],['Electric ÷ gravity, two protons','1.2 × 10³⁶'],['Rest energy of 0.2 g','1.8 × 10¹³ J'],['Energy from burning it','≈ 6.6 kJ']],
+    fl:'Gravity here points straight down and is the same everywhere in the view, 9.81 m/s². The arrows appear once the view is large enough for it to change.',pl:PL,simpl:ASIMPL,
+    hint:'Press “Let go of the diamond”, or zoom out toward the whole Earth. Zoom in to go back to the gem.'};
+  if(n===15)return {k:'Gravity · a planet',h:'Earth',
+    p:['The person is now a point at Greenwich, London, on a ball 12,742 km across. Earth is drawn at true scale, lit by the Sun at midday in Greenwich on the March 2026 equinox.',
+       'Gravity pulls every part of Earth toward every other part, which is why anything this massive ends up round. At the surface it gives g = GM/R² ≈ 9.8 m/s², and it weakens with the square of the distance from Earth’s center, not from the ground.',
+       'The air is the thin blue rim. Half of it lies below 5.5 km and 99% below about 31 km. Space officially starts at 100 km, roughly the thickness of the glow.',
+       'The ring is the International Space Station’s orbit, 420 km up, also to scale. Gravity there is still 88% as strong as on the ground. Astronauts float because they are falling: they move sideways at 7.66 km/s, so fast that the ground curves away as fast as they fall toward it.'],
+    eq:[['<i>g</i> = <i>GM</i> / <i>r</i>²','Newton’s gravity at distance r from Earth’s center, with GM = 3.986 × 10¹⁴ m³/s².'],
+        ['<i>v</i> = √(<i>GM</i> / <i>r</i>)','Speed of a circular orbit. At 420 km up: 7.66 km/s, one lap every 92.8 minutes.']],
+    f:[['Diameter','12,742 km'],['Mass','5.97 × 10²⁴ kg'],['Surface gravity','9.78 to 9.83 m/s²'],['Escape speed','11.2 km/s'],['Space station height','≈ 420 km'],['Space station lap','92.8 min']],
+    fl:FL,pl:PL,simpl:ASIMPL,hint:'Press “Run time ×300” to watch the space station orbit. Zoom out to find the Moon.'};
+  if(n===16)return {k:'Gravity · orbits',h:'Earth and the Moon',
+    p:['The Moon is 384,400 km away on average, about 30 Earth widths. Light crosses the gap in 1.28 seconds. Both bodies and the distance are drawn to scale, which is why they are so small; the glows mark where they are.',
+       'The Moon does not circle Earth’s center. Both go round their shared center of mass, 4,670 km from Earth’s center, still inside Earth, so Earth wobbles round that point once a month.',
+       'The Moon pulls harder on Earth’s near side than on its far side. That difference stretches the oceans into two bulges, which is why most coasts get two high tides a day. Tidal friction is slowly pushing the Moon away, 3.8 cm a year, measured by bouncing lasers off mirrors the Apollo astronauts left there.',
+       'The Moon keeps one face toward us because Earth’s tides on it long ago slowed its spin until its day matched its 27.3-day orbit.'],
+    eq:[['<i>F</i> = <i>G m</i><sub>1</sub><i>m</i><sub>2</sub> / <i>r</i>²','The force that holds the diamond in the hand holds the Moon in orbit. Newton’s insight was that a falling apple and the Moon are one problem.'],
+        ['<i>a</i><sub>tide</sub> ≈ 2<i>GMR</i> / <i>d</i>³','Tidal stretch: the difference in pull across Earth. It falls with distance cubed, so the Sun, 27 million times heavier but 390 times farther, raises tides only 46% as strong as the Moon’s.']],
+    f:[['Moon’s diameter','3,474 km'],['Distance','363,300 to 405,500 km'],['One orbit','27.32 days'],['New moon to new moon','29.53 days'],['Surface gravity','1.62 m/s²'],['Moving away','3.8 cm per year']],
+    fl:FL+' The Moon’s own pull only wins very close to it.',pl:PL,simpl:ASIMPL,hint:'Press “Run time ×100,000” to watch a month go by. Zoom out to see Earth’s path around the Sun.'};
+  if(n===17)return {k:'Gravity · a star',h:'The Sun',sun:true,
+    p:['The Sun is 1.39 million km across, 109 times Earth. The small ball beside it is Earth at the same scale; really it is 150 million km away. The Sun holds 99.86% of the mass of the solar system.',
+       'It is a ball of hot plasma in balance: gravity pulls every layer in, and the pressure of the hotter gas below pushes it out. In the core this squeeze reaches 15.7 million K and 150 times the density of water, enough for hydrogen nuclei to fuse into helium. Each second 4.26 million tonnes of mass becomes energy.',
+       'Fusion needs the weak force from the start of this zoom. Two protons can only stick if one turns into a neutron through a W boson, giving off a positron and a neutrino. That step is so slow that a proton in the core waits billions of years on average, which is why the Sun lasts so long.',
+       'The energy leaves slowly. In the radiative zone light is absorbed and re-emitted by the plasma over and over (here, unlike in a diamond, that really does happen), so it takes very roughly 100,000 years to get out. Above 71% of the radius the gas boils instead and convection carries the heat up. From the surface, light reaches Earth in 8.3 minutes.',
+       'Its true color is white. The 5,772 K surface glows at every visible wavelength, peaking in blue-green. It looks yellow only through air, which scatters some blue out of the direct beam.'],
+    eq:[['<i>dP</i>/<i>dr</i> = −<i>G M</i>(<i>r</i>) <i>ρ</i> / <i>r</i>²','Hydrostatic balance: at each depth the pressure rises just enough to hold up the weight above.'],
+        ['4 ¹H → ⁴He + 2e⁺ + 2ν + 26.7 MeV','The proton–proton chain, overall. 0.7% of the hydrogen’s mass becomes energy.'],
+        ['<i>λ</i><sub>peak</sub> = <i>b</i> / <i>T</i> ≈ 502 nm','Wien’s law for a 5,772 K surface: the peak is blue-green, but the mix of all colors looks white.']],
+    f:[['Diameter','1.39 million km'],['Mass','1.99 × 10³⁰ kg, 333,000 Earths'],['Surface gravity','274 m/s²'],['Surface temperature','5,772 K'],['Core temperature','15.7 million K'],['Power','3.83 × 10²⁶ W'],['Age','4.6 billion years']],
+    fl:FL,pl:PL,simpl:ASIMPL,hint:'Choose “Cutaway”, then press “Follow the energy out”. Zoom out to see the planets.'};
+  return {k:'Gravity · the solar system',h:'The inner planets',
+    p:['Mercury, Venus, Earth and Mars on their real orbits, placed where they were on 20 March 2026. At true size even the Sun would be only a few pixels wide here, and the planets far less than one, so each body is marked with a glow.',
+       'Each orbit is an ellipse with the Sun at one focus. Mercury’s is the most stretched: its distance swings between 46 and 70 million km. Mars ranges from 207 to 249 million km.',
+       'The farther out, the slower: Mercury laps the Sun in 88 days, Mars in 687. The square of the period grows as the cube of the orbit’s size, T² ∝ a³, exactly what a pull that weakens as 1/r² predicts.',
+       'Mercury’s orbit also turns slowly: its closest point to the Sun shifts 574 arcseconds per century. Newton’s gravity, with the other planets’ tugs, explains all but 43 of them. The last 43 needed Einstein’s general relativity, in which mass curves space and time. That is the next step of this zoom.'],
+    eq:[['<i>T</i>² = <i>a</i>³','Kepler’s third law, with T in years and a in astronomical units (1 AU = 149.6 million km, Earth’s average distance).'],
+        ['<i>v</i> = √(<i>GM</i><sub>☉</sub> (2/<i>r</i> − 1/<i>a</i>))','Speed along an ellipse: fastest at the closest point. Earth moves at 29.3 to 30.3 km/s.']],
+    f:[['1 AU','149.6 million km'],['Sunlight to Earth','8.3 min'],['Mercury','88 days'],['Venus','225 days'],['Earth','365.26 days'],['Mars','687 days']],
+    fl:FL,pl:PL,simpl:ASIMPL,hint:'Press “Run time ×2,000,000” to watch the planets move. Zoom in to go back to Earth.'};}
+
+
 function draw(dt){
   z+=(zT-z)*Math.min(1,dt*5);
-  if(!paused&&!reduced&&now-lastInput>4&&!(branch==='pho'&&(PP.on||level===12)))theta+=dt*0.05;   // flat diagrams hold still
+  // zooming out past the gem continues into the astro branch, and back
+  if(branch==='mat'&&z>-1.45&&zT>-1.45){setBranch('astro');AS.focus='path';AS.fb=0;}else if(branch==='astro'&&z<-1.6&&zT<-1.6)setBranch('mat');
+  if(!paused&&!reduced&&now-lastInput>4&&!(branch==='pho'&&(PP.on||level===12))&&!(branch==='astro'&&level===17&&AS.cut))theta+=dt*0.05;   // flat diagrams hold still
+  if(branch==='astro'){drawAstro(dt);return;}
   if(branch==='mat'){drawMat(dt);return;}
   if(branch==='pho'){drawPho(dt);return;}
   var view=Math.pow(10,z+15),dist=view/2/Math.tan(camera.fov*Math.PI/360);
@@ -2161,7 +2475,7 @@ function frame(ms){var dt=Math.min(0.05,(ms-last)/1000);last=ms;now+=dt;
   if(!paused)physics(dt*(reduced?0.35:1));draw(dt);requestAnimationFrame(frame);}
 physics(0.016);requestAnimationFrame(frame);
 // test hook for automated checks
-window.__zoom={wrong:function(){SF.wrong=!SF.wrong;},zto:function(v){zT=v;},tset:function(v,sp){PH.t=v;if(sp!==undefined)PH.speed=sp;},elem:function(e,one){setElem(e);PH.one=!!one;var l=level;level=-1;setLevel(l);},psi:function(){PH.psi=true;var l=level;level=-1;setLevel(l);},det:function(){detectPhotons();},phsel:function(a){PH.sel={};a.forEach(function(l){PH.sel[l]=true;});},pho:function(lv){setBranch('pho');z=zT=LEVEL_Z[lv];},pair:function(){spawnPair();},light:function(){doLight();},sec:function(x,a){SEC.x=x;SEC.ang=a;},gem:function(g){GEM.sel=g;},mat:function(lv,m){if(m)matSel=m;setBranch('mat');z=zT=LEVEL_Z[lv];},volt:function(){vt.pending=0.01;},main:function(lv){setBranch('main');z=zT=LEVEL_Z[lv];},ir:function(){ir.pending=0.01;},mo:function(m){setMolSel(m);},adv:function(sec){for(var k=0;k<sec/0.05;k++)physics(0.05);},xray:function(){xr.pending=0.01;},orb:function(o){orbSel=o;},view:function(){$('bview').click();},go:function(n){z=zT=LEVEL_Z[n];},decay:function(){dec.pending=0.01;},pull:function(){pull.phase=1;pull.t=0;}};
+window.__zoom={_as:AS,_cam:camera,astro:function(lv){astroGo(lv);z=zT=LEVEL_Z[lv];AS.fb=AS.focus==='sun'?1:0;},asCut:function(c){AS.cut=!!c;},asRun:function(sec){AS.t+=sec;},asWalk:function(sec){astroWalk();AS.walk.t=sec;},wrong:function(){SF.wrong=!SF.wrong;},zto:function(v){zT=v;},tset:function(v,sp){PH.t=v;if(sp!==undefined)PH.speed=sp;},elem:function(e,one){setElem(e);PH.one=!!one;var l=level;level=-1;setLevel(l);},psi:function(){PH.psi=true;var l=level;level=-1;setLevel(l);},det:function(){detectPhotons();},phsel:function(a){PH.sel={};a.forEach(function(l){PH.sel[l]=true;});},pho:function(lv){setBranch('pho');z=zT=LEVEL_Z[lv];},pair:function(){spawnPair();},light:function(){doLight();},sec:function(x,a){SEC.x=x;SEC.ang=a;},gem:function(g){GEM.sel=g;},mat:function(lv,m){if(m)matSel=m;setBranch('mat');z=zT=LEVEL_Z[lv];},volt:function(){vt.pending=0.01;},main:function(lv){setBranch('main');z=zT=LEVEL_Z[lv];},ir:function(){ir.pending=0.01;},mo:function(m){setMolSel(m);},adv:function(sec){for(var k=0;k<sec/0.05;k++)physics(0.05);},xray:function(){xr.pending=0.01;},orb:function(o){orbSel=o;},view:function(){$('bview').click();},go:function(n){z=zT=LEVEL_Z[n];},decay:function(){dec.pending=0.01;},pull:function(){pull.phase=1;pull.t=0;}};
 })();
 </script>
 </body>

@@ -19,6 +19,9 @@ plain language.
   uncertainty principle) → CO₂ molecule → a cube of air.
 - **Carbon in a solid:** diamond vs graphite lattice → crystal grains → a round brilliant diamond with
   ray-traced light.
+- **Out to space:** the gem between a person's fingertips → Earth with its air and the space station's orbit →
+  Earth and the Moon → the Sun, with a cutaway of its core and zones → the inner planets on their real orbits.
+  Gravity throughout: free fall, orbits, tides, Kepler's laws, and the pull drawn as a field.
 - **Light:** a pulse through air, crown glass and diamond (real refractive indices, Fresnel reflection,
   angle of incidence, s/p polarization, Brewster angle, emission lines of H, Na and Hg); how light really
   slows down in a material (Ewald–Oseen); Feynman's sum over paths and the two-slit experiment with single
@@ -75,6 +78,11 @@ Models and constants are cited in code comments and panel text. The main ones:
   ([arXiv:1903.08308](https://arxiv.org/abs/1903.08308)); Bissey et al., flux tubes in baryons
   ([arXiv:hep-lat/0606016](https://arxiv.org/abs/hep-lat/0606016)).
 - **Diamond cut:** Marcel Tolkowsky, *Diamond Design* (1919).
+- **Planets and Moon:** E. M. Standish, *Keplerian Elements for Approximate Positions of the Major Planets* (JPL);
+  main terms of the lunar theory as in the *Astronomical Almanac* low-precision formulae. Earth and Moon maps from
+  the three.js examples (derived from NASA imagery).
+- **The Sun:** IAU 2015 nominal values; standard solar model zone boundaries (convection zone base at 0.713 R,
+  Christensen-Dalsgaard et al. 1991).
 
 Built with [Three.js](https://threejs.org/) r128 (MIT license).
 
