@@ -59,6 +59,8 @@ The claude.ai artifact above is the older copy from before the astro branch.
   (`volRT`) and are composited. Orbitals use Clementi–Raimondi Z_eff (1s 5.67, 2s 3.22, 2p 3.14).
 - **Camera**: orbit angles `theta`, `phi`; `pan` vector (middle-drag, Shift-drag, two-finger drag; `0`
   or double middle-click / double-tap recenters). Zoom eases `z → zT`.
+  Zooming in eases `pan` back to `zoomAnchor()` (origin, or the surface close-up in pho) unless `zoomFree`
+  (Alt held on the zoom input, or the touch-only “Free zoom” toggle `freeBtn`).
 - **Test hook**: `window.__zoom` (`zto(z)`, `tset(t,speed)`, `elem(e)`, `wrong()`, `astro(lv)`, `asCut(on)`, `asWalk(sec)`,
   `_as` = the astro state, `_cam` = the camera) for automated checks.
 - Side panels hide/resize; layout in `localStorage['scaleZoom.panels']`; surface close-up toggle in

@@ -34,9 +34,11 @@ plain language.
 | Rotate | drag | one-finger drag |
 | Zoom | scroll wheel, `+` / `−` buttons | pinch |
 | Pan | middle-drag or Shift-drag | two-finger drag |
+| Zoom without sliding back | hold `Alt` while scrolling | “Free zoom” button |
 | Recenter | `0` or double middle-click | double-tap |
 | Hide panels | `I` (info), `L` (levels), `H` (both) | panel tabs |
 
+Zooming in slides the view back toward the object you are zooming into, so a pan never leaves you lost.
 Jump to any level with the scale ladder on the right.
 
 ## Running it

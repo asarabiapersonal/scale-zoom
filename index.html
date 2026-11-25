@@ -139,6 +139,8 @@ details ul{margin:6px 0 0;padding-left:18px}
 #controls{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;pointer-events:auto}
 .btn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:500}
 .btn:hover{border-color:var(--accent)}
+.btn[aria-pressed="true"]#bfree{border-color:var(--accent);color:var(--accent)}
+@media (hover:hover) and (pointer:fine){#bfree{display:none}}   /* desktop: hold Alt instead */
 .btn.pri{background:var(--accent);color:#1a1405;border-color:var(--accent)}
 .btn.sq{width:38px;padding:8px 0;text-align:center;font-family:var(--mono)}
 #scalebar{display:flex;flex-direction:column;align-items:center;gap:3px;margin-right:6px;min-width:150px}
@@ -195,7 +197,7 @@ details ul{margin:6px 0 0;padding-left:18px}
 </head>
 <body>
 <div id="app">
-  <canvas id="c" aria-label="Interactive 3D view from air molecules down to the quarks of a carbon-14 atom. Drag to rotate, middle-drag, Shift-drag or two-finger drag to pan, scroll or pinch to zoom; double-tap or press 0 to recenter."></canvas>
+  <canvas id="c" aria-label="Interactive 3D view from air molecules down to the quarks of a carbon-14 atom. Drag to rotate, middle-drag, Shift-drag or two-finger drag to pan, scroll or pinch to zoom; zooming in slides back toward the object being zoomed into, unless you hold Alt or turn on Free zoom; double-tap or press 0 to recenter."></canvas>
   <div id="labels" aria-hidden="true"></div>
 
   <div id="panelWrap">
@@ -248,6 +250,7 @@ details ul{margin:6px 0 0;padding-left:18px}
       <button class="btn" id="bview" aria-pressed="true">View: fields</button>
       <button class="btn" id="bsm">Standard Model map</button>
       <button class="btn" id="bpause" aria-pressed="false">Pause</button>
+      <button class="btn" id="bfree" aria-pressed="false" title="Zoom where you have panned to, without sliding back">Free zoom</button>
     </div>
   </div>
 
@@ -1789,6 +1792,11 @@ var ptrs={},pinch=0,pmid=null,tapT=0,tapX=0,tapY=0,qTmpPan=new V3(),panR=new V3(
 function panBy(dx,dy){var view=Math.pow(10,z+(branch==='astro'?0:15)),k=view/Math.max(1,H);panR.setFromMatrixColumn(camera.matrixWorld,0);panU.setFromMatrixColumn(camera.matrixWorld,1);
   pan.addScaledVector(panR,-dx*k).addScaledVector(panU,dy*k);}
 function resetPan(){pan.set(0,0,0);}
+// zooming in slides any pan back toward the object the zoom leads into; Alt (or the Free zoom toggle on touch screens) zooms in place
+var zoomFree=false,freeBtn=false,tAnc=new V3();
+function zoomAnchor(){if(branch==='pho'&&SF.show&&!PP.on&&z>-7.9){sfPlace();var ax=(SF.px+0.1)*1e9,ay=(SF.py+0.6)*1e9;if(Math.hypot(pan.x-ax,pan.y-ay)<3.5e9)return tAnc.set(ax,ay,0);}   // the surface close-up
+  return tAnc.set(0,0,0);}
+function zoomInput(e){zoomFree=freeBtn||!!(e&&e.altKey);}
 canvas.addEventListener('mousedown',function(e){if(e.button===1)e.preventDefault();});   // stop the browser's middle-click autoscroll
 canvas.addEventListener('auxclick',function(e){if(e.button===1)e.preventDefault();});
 window.addEventListener('keydown',function(e){if(e.target.closest&&e.target.closest('input,textarea,select'))return;if(e.key==='0'&&!e.ctrlKey&&!e.metaKey){resetPan();setStatus('View recentered.',3);}});
@@ -1801,18 +1809,19 @@ canvas.addEventListener('pointermove',function(e){var p=ptrs[e.pointerId];if(!p)
   if(p.pan){panBy(e.clientX-p.x,e.clientY-p.y);p.x=e.clientX;p.y=e.clientY;return;}
   if(ids.length===1){theta+=(e.clientX-p.x)*0.006;phi=clamp(phi-(e.clientY-p.y)*0.006,0.15,2.99);p.x=e.clientX;p.y=e.clientY;}
   else if(ids.length===2){p.x=e.clientX;p.y=e.clientY;var a0=ptrs[ids[0]],a1=ptrs[ids[1]],d=Math.hypot(a0.x-a1.x,a0.y-a1.y),mid=[(a0.x+a1.x)/2,(a0.y+a1.y)/2];
-    if(pinch>0&&d>0){zT=clamp(zT-Math.log10(d/pinch),zLo(),zHi());}pinch=d;
+    if(pinch>0&&d>0){zoomInput(e);zT=clamp(zT-Math.log10(d/pinch),zLo(),zHi());}pinch=d;
     // two fingers: spread to zoom, slide together to pan
     if(pmid)panBy(mid[0]-pmid[0],mid[1]-pmid[1]);pmid=mid;}});
 function up(e){delete ptrs[e.pointerId];pinch=0;pmid=null;}
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
-canvas.addEventListener('wheel',function(e){e.preventDefault();var dy=e.deltaMode===1?e.deltaY*30:e.deltaY;
+canvas.addEventListener('wheel',function(e){e.preventDefault();zoomInput(e);var dy=e.deltaMode===1?e.deltaY*30:e.deltaY;
   zT=clamp(zT+clamp(dy,-240,240)*0.0015,zLo(),zHi());lastInput=now;},{passive:false});
-$('zin').onclick=function(){zT=clamp(zT-0.5,zLo(),zHi());};
-$('zout').onclick=function(){zT=clamp(zT+0.5,zLo(),zHi());};
+$('zin').onclick=function(e){zoomInput(e);zT=clamp(zT-0.5,zLo(),zHi());};
+$('zout').onclick=function(e){zoomInput(e);zT=clamp(zT+0.5,zLo(),zHi());};
 $('bdemo').onclick=function(){DEMO[level>=0?level:4][1]();};
-document.querySelectorAll('.rung[data-level]').forEach(function(b){b.onclick=function(){resetPan();var lv=+b.dataset.level,nb=lv>=14?'astro':lv>=9?'pho':lv>=6?'mat':'main';if(nb==='astro'){astroGo(lv);return;}zT=LEVEL_Z[lv];if(nb!==branch){setBranch(nb);z=zT;}PP.on=lv===13;if(lv===13){PP.t=0;theta=Math.PI/2-0.1;phi=Math.PI/2-0.05;}if(lv===9&&SF.show){zT=-4.5;pan.set(0,-2.8e9,0);}if(lv===12){SF.show=true;PP.on=false;sfPlace();pan.set((SF.px+0.1)*1e9,(SF.py+0.6)*1e9,0);theta=Math.PI/2-0.12;phi=Math.PI/2-0.06;}};});
+document.querySelectorAll('.rung[data-level]').forEach(function(b){b.onclick=function(){resetPan();zoomFree=freeBtn;var lv=+b.dataset.level,nb=lv>=14?'astro':lv>=9?'pho':lv>=6?'mat':'main';if(nb==='astro'){astroGo(lv);return;}zT=LEVEL_Z[lv];if(nb!==branch){setBranch(nb);z=zT;}PP.on=lv===13;if(lv===13){PP.t=0;theta=Math.PI/2-0.1;phi=Math.PI/2-0.05;}if(lv===9&&SF.show){zT=-4.5;pan.set(0,-2.8e9,0);}if(lv===12){SF.show=true;PP.on=false;sfPlace();pan.set((SF.px+0.1)*1e9,(SF.py+0.6)*1e9,0);theta=Math.PI/2-0.12;phi=Math.PI/2-0.06;}};});
 $('bview').onclick=function(){fieldMode=!fieldMode;this.textContent=fieldMode?'View: fields':'View: particles';this.setAttribute('aria-pressed',String(fieldMode));var l=level;level=-1;setLevel(l);};
+$('bfree').onclick=function(){freeBtn=!freeBtn;this.setAttribute('aria-pressed',String(freeBtn));setStatus(freeBtn?'Free zoom: zooming stays where you have panned to.':'Zooming in slides back toward what you are zooming into.',5);};
 $('bpause').onclick=function(){paused=!paused;this.textContent=paused?'Play':'Pause';this.setAttribute('aria-pressed',String(paused));};
 
 /* ---------- Standard Model sheet ---------- */
@@ -2298,7 +2307,8 @@ function astroLevel(n){var FL='The arrows show gravity’s pull at each point in
 
 
 function draw(dt){
-  z+=(zT-z)*Math.min(1,dt*5);
+  var zPrev=z;z+=(zT-z)*Math.min(1,dt*5);
+  if(z<zPrev&&!zoomFree&&pan.lengthSq()>0)pan.lerp(zoomAnchor(),1-Math.exp(-(zPrev-z)*3.5));   // about 97% of the way back per factor of ten zoomed in
   // zooming out past the gem continues into the astro branch, and back
   if(branch==='mat'&&z>-1.45&&zT>-1.45){setBranch('astro');AS.focus='path';AS.fb=0;}else if(branch==='astro'&&z<-1.6&&zT<-1.6)setBranch('mat');
   if(!paused&&!reduced&&now-lastInput>4&&!(branch==='pho'&&(PP.on||level===12))&&!(branch==='astro'&&level===17&&AS.cut))theta+=dt*0.05;   // flat diagrams hold still
@@ -2475,7 +2485,7 @@ function frame(ms){var dt=Math.min(0.05,(ms-last)/1000);last=ms;now+=dt;
   if(!paused)physics(dt*(reduced?0.35:1));draw(dt);requestAnimationFrame(frame);}
 physics(0.016);requestAnimationFrame(frame);
 // test hook for automated checks
-window.__zoom={_as:AS,_cam:camera,astro:function(lv){astroGo(lv);z=zT=LEVEL_Z[lv];AS.fb=AS.focus==='sun'?1:0;},asCut:function(c){AS.cut=!!c;},asRun:function(sec){AS.t+=sec;},asWalk:function(sec){astroWalk();AS.walk.t=sec;},wrong:function(){SF.wrong=!SF.wrong;},zto:function(v){zT=v;},tset:function(v,sp){PH.t=v;if(sp!==undefined)PH.speed=sp;},elem:function(e,one){setElem(e);PH.one=!!one;var l=level;level=-1;setLevel(l);},psi:function(){PH.psi=true;var l=level;level=-1;setLevel(l);},det:function(){detectPhotons();},phsel:function(a){PH.sel={};a.forEach(function(l){PH.sel[l]=true;});},pho:function(lv){setBranch('pho');z=zT=LEVEL_Z[lv];},pair:function(){spawnPair();},light:function(){doLight();},sec:function(x,a){SEC.x=x;SEC.ang=a;},gem:function(g){GEM.sel=g;},mat:function(lv,m){if(m)matSel=m;setBranch('mat');z=zT=LEVEL_Z[lv];},volt:function(){vt.pending=0.01;},main:function(lv){setBranch('main');z=zT=LEVEL_Z[lv];},ir:function(){ir.pending=0.01;},mo:function(m){setMolSel(m);},adv:function(sec){for(var k=0;k<sec/0.05;k++)physics(0.05);},xray:function(){xr.pending=0.01;},orb:function(o){orbSel=o;},view:function(){$('bview').click();},go:function(n){z=zT=LEVEL_Z[n];},decay:function(){dec.pending=0.01;},pull:function(){pull.phase=1;pull.t=0;}};
+window.__zoom={_as:AS,_cam:camera,_pan:function(){return pan.toArray();},astro:function(lv){astroGo(lv);z=zT=LEVEL_Z[lv];AS.fb=AS.focus==='sun'?1:0;},asCut:function(c){AS.cut=!!c;},asRun:function(sec){AS.t+=sec;},asWalk:function(sec){astroWalk();AS.walk.t=sec;},wrong:function(){SF.wrong=!SF.wrong;},zto:function(v){zT=v;},tset:function(v,sp){PH.t=v;if(sp!==undefined)PH.speed=sp;},elem:function(e,one){setElem(e);PH.one=!!one;var l=level;level=-1;setLevel(l);},psi:function(){PH.psi=true;var l=level;level=-1;setLevel(l);},det:function(){detectPhotons();},phsel:function(a){PH.sel={};a.forEach(function(l){PH.sel[l]=true;});},pho:function(lv){setBranch('pho');z=zT=LEVEL_Z[lv];},pair:function(){spawnPair();},light:function(){doLight();},sec:function(x,a){SEC.x=x;SEC.ang=a;},gem:function(g){GEM.sel=g;},mat:function(lv,m){if(m)matSel=m;setBranch('mat');z=zT=LEVEL_Z[lv];},volt:function(){vt.pending=0.01;},main:function(lv){setBranch('main');z=zT=LEVEL_Z[lv];},ir:function(){ir.pending=0.01;},mo:function(m){setMolSel(m);},adv:function(sec){for(var k=0;k<sec/0.05;k++)physics(0.05);},xray:function(){xr.pending=0.01;},orb:function(o){orbSel=o;},view:function(){$('bview').click();},go:function(n){z=zT=LEVEL_Z[n];},decay:function(){dec.pending=0.01;},pull:function(){pull.phase=1;pull.t=0;}};
 })();
 </script>
 </body>
